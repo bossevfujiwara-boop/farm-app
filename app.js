@@ -21,6 +21,35 @@ const defaultFields = [
 const mapImageCandidates = ['20260910_085313.jpg', 'data/20260910_085313.jpg'];
 const csvCandidates = ['schedule.csv', 'data/schedule.csv'];
 const latestOverrides = { n: { crop: 'サツマイモ', variety: '紅はるか、安納芋', status: 'growing', work: '栽培中', nextCrop: 'ニンニク(新植)', nextVariety: '蒼山種', nextPlanting: '9月-11月', nextHarvest: '種まき後35-50日（翌年5月-6月）' } };
+// 主要野菜の相場観ダミーデータ（作物名の部分一致で判定）
+const marketData = {
+  'きゅうり': { trend: '高騰傾向', trendClass: 'up', change: '前年比 +15%', advice: '価格が高い今のうちに計画的な出荷を進めましょう。' },
+  'ミニトマト': { trend: '平年並み', trendClass: 'flat', change: '平年比 +2%', advice: '相場は安定。品質重視の出荷で単価を維持しましょう。' },
+  'トマト': { trend: '平年並み', trendClass: 'flat', change: '平年比 +1%', advice: '大きな変動なし。通常の出荷計画で問題ありません。' },
+  'にら': { trend: '安値圈', trendClass: 'down', change: '前年比 -8%', advice: '出荷時期を数日遅らせるか、直売所など別販路も検討しましょう。' },
+  'サツマイモ': { trend: 'やや高値', trendClass: 'up', change: '平年比 +6%', advice: '貯蔵性が高いため、価格動向を見ながら出荷時期を調整できます。' },
+  'じゃがいも': { trend: '平年並み', trendClass: 'flat', change: '平年比 ±0%', advice: '需給は安定。定期出荷を継続しましょう。' },
+  'キャベツ': { trend: '安値圈', trendClass: 'down', change: '前年比 -12%', advice: '出荷量を押えるか、加工・業務用向け販路の確保がおすすめです。' },
+  'スイカ': { trend: '高騰傾向', trendClass: 'up', change: '前年比 +10%', advice: '需要期に向けて出荷タイミングを前倒しできないか検討しましょう。' },
+  '白菜': { trend: '平年並み', trendClass: 'flat', change: '平年比 -3%', advice: '大きな変動なし。通常の出荷計画で問題ありません。' },
+  '人参': { trend: 'やや高値', trendClass: 'up', change: '平年比 +7%', advice: '価格が上向き傾向のため出荷量を増やす好機です。' },
+  'にんじん': { trend: 'やや高値', trendClass: 'up', change: '平年比 +7%', advice: '価格が上向き傾向のため出荷量を増やす好機です。' }
+};
+// Open-Meteo（APIキー不要）の天気コード対応表
+const weatherCodeMap = { 0: ['☀', '快晴'], 1: ['🌤', '晴れ'], 2: ['⛅', '薄曇り'], 3: ['☁', '曇り'], 45: ['🌫', '霧'], 48: ['🌫', '霧'], 51: ['🌦', '小雨'], 53: ['🌦', '小雨'], 55: ['🌧', '雨'], 61: ['🌦', '雨'], 63: ['🌧', '雨'], 65: ['🌧', '大雨'], 71: ['🌨', '雪'], 73: ['🌨', '雪'], 75: ['❄', '大雪'], 80: ['🌦', 'にわか雨'], 81: ['🌧', 'にわか雨'], 82: ['⛈', '激しい雨'], 95: ['⛈', '雷雨'] };
+// 「作業詳細-1」シート読込前のサンプル（A圃場：提示された実数値のみ反映、未確定の日付は未定表示）
+const workProcessSeeds = {
+  a: { poleGroups: [
+    { range: '1ポール', area: '278.1㎡', crop: 'にら', variety: '', tasks: [
+        { name: '土づくり', date: '' }, { name: '定植', date: '2027-03-12' }, { name: '追肥', date: '' },
+        { name: 'EM菌', date: '' }, { name: '収穫予想', date: '2027-05-20' }, { name: '片付け', date: '' }
+      ], memo: 'にら（グリーンベルト）の作付け区画。連作を避けて輪作を計画。', accumulatedTemp: '未設定', idealTemp: '20〜25℃（一般的な目安）' },
+    { range: '9ポール', area: '1755.6㎡', crop: 'じゃがいも', variety: '【レッドムーン】【とうや】', tasks: [
+        { name: '土づくり', date: '' }, { name: '定植', date: '' }, { name: '追肥', date: '' },
+        { name: 'EM菌', date: '' }, { name: '収穫予想', date: '' }, { name: '片付け', date: '' }
+      ], memo: '2品種を作付け。品種ごとの生育差に注意。', accumulatedTemp: '未設定', idealTemp: '15〜20℃（一般的な目安）' }
+  ] }
+};
 const poleDataPendingIds = new Set(['m']);
 const detailedPolePlans = { l1: Array.from({ length: 26 }, (_, index) => { const pole = index + 1; const lengths = ['95.7m', '88.6m', '91.2m', '86.4m', '82.1m', '79.8m']; const contents = [
   ['きゅうり(自根)', '4/29', '380本', '株間40cm'], ['〃', '〃', '380本', '株間40cm'], ['きゅうり(接木)', '5/6', '760本', '株間40cm'], ['〃', '〃', '760本', '株間40cm'],
@@ -60,7 +89,7 @@ let selectedId = 'a';
 let currentMonth = 3;
 
 function normalizePolePlan(poles) { let previous = {}; return (poles || []).map(pole => { const normalized = { ...previous, ...pole }; for (const key of ['crop', 'planting', 'count', 'spacing', 'bed', 'mulch', 'work']) if (normalized[key] === '〃') normalized[key] = previous[key] || ''; previous = normalized; return normalized; }); }
-function applyLatestOverrides(records) { return records.map(field => ({ ...field, ...(latestOverrides[field.id] || {}), poles: normalizePolePlan(field.poles || detailedPolePlans[field.id] || []) })); }
+function applyLatestOverrides(records) { return records.map(field => ({ ...field, ...(latestOverrides[field.id] || {}), poles: normalizePolePlan(field.poles || detailedPolePlans[field.id] || []), workProcess: field.workProcess || workProcessSeeds[field.id] || null })); }
 function loadFields() { try { const stored = JSON.parse(localStorage.getItem('farmnote-fields-v3')); return applyLatestOverrides(stored && stored.length >= defaultFields.length ? stored.map(field => ({ ...field, id: normalizeFieldId(field.id) })) : structuredClone(defaultFields)); } catch { return applyLatestOverrides(structuredClone(defaultFields)); } }
 function saveFields() { localStorage.setItem('farmnote-fields-v3', JSON.stringify(fields)); document.getElementById('last-updated').textContent = '今 保存済み'; }
 function formatDate(date) { if (!date) return '未設定'; const [y, m, d] = date.split('-'); return `${y}.${m}.${d}`; }
@@ -97,6 +126,8 @@ function renderDetail() {
   document.getElementById('selected-next-crop').textContent = field.nextCrop ? `${field.nextCrop}（${field.nextVariety || '品種未設定'}）` : '未設定';
   document.getElementById('selected-next-timing').textContent = field.nextPlanting || '未設定';
   document.getElementById('selected-next-harvest').textContent = field.nextHarvest || '未設定';
+  renderMarketForecast(field);
+  renderWorkProcess(field);
   renderRowPlan(field);
 }
 
@@ -150,7 +181,28 @@ function parseCsv(csvText) { const rows = csvText.trim().split(/\r?\n/).map(row 
 function applyCsv(csvText) { parseCsv(csvText).forEach(([rawId, crop, variety, area, planting, harvest, work, status, column, count, spacing, bed, mulch, columnWork, pole, poleLength, polePlanting]) => { const id = normalizeFieldId(rawId); let field = fields.find(item => item.id === id); if (!field) { field = { id, crop: '', variety: '', area: '', work: '', planting: '', harvest: '', status: 'empty', symbol: '🌱', progress: 0, columns: [], poles: [] }; fields.push(field); } Object.assign(field, { crop: crop || field.crop, variety: variety || field.variety, area: area || field.area, planting: normalizeDateValue(planting), harvest: normalizeDateValue(harvest), work: work || field.work, status: status || (harvest ? 'growing' : field.status) }); if (column) { field.columns = Array.isArray(field.columns) ? field.columns : []; const detail = { column, crop, variety, count, spacing, bed, mulch, work: columnWork || work }; const existingIndex = field.columns.findIndex(item => String(item.column) === String(column)); if (existingIndex >= 0) field.columns[existingIndex] = detail; else field.columns.push(detail); } if (pole) { field.poles = Array.isArray(field.poles) ? field.poles : []; const detail = { pole: pole.startsWith('ポール') ? pole : `ポール↑${pole}`, length: poleLength, crop, variety, planting: polePlanting || planting, count, spacing, bed, mulch, work: columnWork || work }; const existingIndex = field.poles.findIndex(item => item.pole === detail.pole); if (existingIndex >= 0) field.poles[existingIndex] = detail; else field.poles.push(detail); field.poles = normalizePolePlan(field.poles); } }); saveFields(); renderMap(); renderDetail(); renderCalendar(); }
 function workbookFieldIds(sheetName) { const match = String(sheetName).toLowerCase().match(/詳細地図(.+)/); if (!match) return []; return match[1].split(/[.・、,\s]+/).map(normalizeFieldId).filter(id => ['a', 'b', 'c', 'd', 'e1', 'e2', 'f', 'g', 'h', 'i', 'j', 'k', 'l1', 'l2', 'm', 'n', 'o'].includes(id)); }
 function extractWorkbookPoleRow(row) { const cells = row.map(cell => String(cell ?? '').trim()).filter(Boolean); const poleCell = cells.find(cell => /ポール|pole/i.test(cell) && /\d+/.test(cell)) || cells.find(cell => /^\d+$/.test(cell)); if (!poleCell) return null; const poleNumber = poleCell.match(/\d+/)?.[0]; if (!poleNumber) return null; const length = cells.find(cell => /\d+(?:\.\d+)?\s*m(?:\s|$)/i.test(cell)) || ''; const dateMatches = cells.join(' ').match(/(?:\d{1,2}[\/\-]\d{1,2}|\d{1,2}月\d{1,2}日)/g) || []; const count = cells.find(cell => /\d+\s*(?:本|株)/.test(cell)) || ''; const content = cells.filter(cell => cell !== poleCell && cell !== length && !/^\d+(?:\.\d+)?\s*m$/i.test(cell) && !/^(?:列|ポール|長さ|本数|株数|株間|畝|マルチ|作業)/.test(cell)).join(' / '); return { pole: `ポール↑${poleNumber}`, length, crop: content || '〃', planting: dateMatches[0] || '〃', count, spacing: cells.find(cell => /株間|cm/i.test(cell)) || '', bed: cells.find(cell => /畝/.test(cell)) || '', mulch: cells.find(cell => /マルチ/.test(cell)) || '', work: cells.find(cell => /作業|定植|誘引|除草|収穫/.test(cell)) || '' }; }
-function applyWorkbook(file) { if (!window.XLSX) { showToast('Excel読み込みライブラリを取得できません'); return; } const reader = new FileReader(); reader.onload = event => { try { const workbook = XLSX.read(event.target.result, { type: 'array', cellDates: false }); const targetSheets = workbook.SheetNames.filter(name => /^詳細地図(?:a|b|c|d|e1|e2|f|g|h|i|j|k|l1|l2|m|n|o)(?:[.・、,\s]|$)/i.test(name) || name.includes('詳細地図')); const extracted = new Map(); targetSheets.forEach(sheetName => { const ids = workbookFieldIds(sheetName); if (!ids.length) return; const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' }); rows.forEach(row => { const pole = extractWorkbookPoleRow(row); if (!pole) return; ids.forEach(id => { if (!extracted.has(id)) extracted.set(id, []); extracted.get(id).push(pole); }); }); }); extracted.forEach((poles, id) => { let field = fields.find(item => item.id === id); if (!field) { field = { id, crop: '', variety: '', area: '', work: '', planting: '', harvest: '', status: 'growing', symbol: '🌱', progress: 0, columns: [], poles: [] }; fields.push(field); } field.poles = normalizePolePlan(poles); if (latestOverrides[id]) Object.assign(field, latestOverrides[id]); }); saveFields(); renderMap(); renderDetail(); renderCalendar(); showToast(`${extracted.size}圃場の詳細地図を読み込みました`); } catch (error) { console.error(error); showToast('Excelの詳細地図を解析できませんでした'); } }; reader.readAsArrayBuffer(file); }
+function findHeaderKey(headers, patterns) { return headers.find(header => patterns.some(pattern => header.includes(pattern))); }
+function parseWorkDetailSheet(sheet) {
+  const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+  if (!rows.length) return [];
+  const headers = Object.keys(rows[0]);
+  const fieldKey = findHeaderKey(headers, ['圃場', '区画']);
+  const poleKey = findHeaderKey(headers, ['ポール', '列']);
+  const areaKey = findHeaderKey(headers, ['面積']);
+  const cropKey = findHeaderKey(headers, ['品目', '作物']);
+  const varietyKey = findHeaderKey(headers, ['品種']);
+  const memoKey = findHeaderKey(headers, ['メモ']);
+  const accumulatedTempKey = findHeaderKey(headers, ['積算温度']);
+  const idealTempKey = findHeaderKey(headers, ['適正生育温度', '適正温度']);
+  const taskKeys = ['土づくり', '定植', '追肥', 'EM菌', '収穫予想', '片付け'].map(label => ({ label, key: findHeaderKey(headers, [label]) }));
+  if (!fieldKey) return [];
+  return rows.map(row => { const id = normalizeFieldId(String(row[fieldKey] || '').replace('圃場', '')); if (!id) return null; const poleRaw = poleKey ? String(row[poleKey] || '') : ''; const areaRaw = areaKey ? String(row[areaKey] || '') : ''; return { id, range: poleRaw ? (poleRaw.includes('ポール') ? poleRaw : `${poleRaw}ポール`) : '', area: areaRaw ? (areaRaw.includes('㎡') ? areaRaw : `${areaRaw}㎡`) : '', crop: cropKey ? String(row[cropKey] || '') : '', variety: varietyKey ? String(row[varietyKey] || '') : '', tasks: taskKeys.map(({ label, key }) => ({ name: label, date: key ? normalizeDateValue(String(row[key] || '')) : '' })), memo: memoKey ? String(row[memoKey] || '') : '', accumulatedTemp: accumulatedTempKey ? String(row[accumulatedTempKey] || '') : '', idealTemp: idealTempKey ? String(row[idealTempKey] || '') : '' }; }).filter(Boolean);
+}
+function applyWorkbook(file) { if (!window.XLSX) { showToast('Excel読み込みライブラリを取得できません'); return; } const reader = new FileReader(); reader.onload = event => { try { const workbook = XLSX.read(event.target.result, { type: 'array', cellDates: false }); const targetSheets = workbook.SheetNames.filter(name => /^詳細地図(?:a|b|c|d|e1|e2|f|g|h|i|j|k|l1|l2|m|n|o)(?:[.・、,\s]|$)/i.test(name) || name.includes('詳細地図')); const extracted = new Map(); targetSheets.forEach(sheetName => { const ids = workbookFieldIds(sheetName); if (!ids.length) return; const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' }); rows.forEach(row => { const pole = extractWorkbookPoleRow(row); if (!pole) return; ids.forEach(id => { if (!extracted.has(id)) extracted.set(id, []); extracted.get(id).push(pole); }); }); }); extracted.forEach((poles, id) => { let field = fields.find(item => item.id === id); if (!field) { field = { id, crop: '', variety: '', area: '', work: '', planting: '', harvest: '', status: 'growing', symbol: '🌱', progress: 0, columns: [], poles: [] }; fields.push(field); } field.poles = normalizePolePlan(poles); if (latestOverrides[id]) Object.assign(field, latestOverrides[id]); });
+    const workDetailSheetName = workbook.SheetNames.find(name => name.includes('作業詳細'));
+    let workDetailCount = 0;
+    if (workDetailSheetName) { const rows = parseWorkDetailSheet(workbook.Sheets[workDetailSheetName]); const byId = new Map(); rows.forEach(row => { if (!byId.has(row.id)) byId.set(row.id, []); byId.get(row.id).push(row); }); byId.forEach((poleGroups, id) => { let field = fields.find(item => item.id === id); if (!field) { field = { id, crop: '', variety: '', area: '', work: '', planting: '', harvest: '', status: 'growing', symbol: '🌱', progress: 0, columns: [], poles: [] }; fields.push(field); } field.workProcess = { poleGroups }; }); workDetailCount = byId.size; }
+    saveFields(); renderMap(); renderDetail(); renderCalendar(); showToast(`${extracted.size}圃場の詳細地図・${workDetailCount}圃場の作業詳細を読み込みました`); } catch (error) { console.error(error); showToast('Excelの詳細地図を解析できませんでした'); } }; reader.readAsArrayBuffer(file); }
 async function loadWorkbookCandidates() { for (const path of ['2027年栽培計画.xlsx', 'data/2027年栽培計画.xlsx']) { try { const response = await fetch(path, { cache: 'no-store' }); if (response.ok) { const blob = await response.blob(); applyWorkbook(new File([blob], path)); return; } } catch { } } }
 function loadMapImage() { mapImageCandidates.forEach(path => { const image = new Image(); image.onload = () => { const map = document.getElementById('map-image'); map.style.setProperty('--map-background-image', `url("${path}")`); map.classList.add('custom'); }; image.src = path; }); }
 function setMapSource(url) { const iframe = document.getElementById('map-iframe'); const image = document.getElementById('map-image'); const trimmedUrl = String(url || '').trim(); if (!trimmedUrl) { iframe.classList.add('hidden'); iframe.removeAttribute('src'); image.classList.remove('hidden'); return; } try { const parsedUrl = new URL(trimmedUrl); if (!['http:', 'https:'].includes(parsedUrl.protocol)) throw new Error('Unsupported protocol'); iframe.src = parsedUrl.href; iframe.classList.remove('hidden'); image.classList.add('hidden'); localStorage.setItem('farmnote-map-embed-url', parsedUrl.href); showToast('インタラクティブ地図を表示しました'); } catch { showToast('Googleマイマップの埋め込みURLを確認してください'); } }
@@ -161,4 +213,42 @@ document.getElementById('xlsx-input').addEventListener('change', event => { cons
 document.getElementById('apply-map-url').addEventListener('click', () => setMapSource(document.getElementById('map-url').value));
 document.getElementById('use-image-map').addEventListener('click', () => { localStorage.removeItem('farmnote-map-embed-url'); document.getElementById('map-url').value = ''; setMapSource(''); });
 document.getElementById('map-input').addEventListener('change', event => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { localStorage.removeItem('farmnote-map-embed-url'); document.getElementById('map-url').value = ''; document.getElementById('map-iframe').classList.add('hidden'); document.getElementById('map-iframe').removeAttribute('src'); document.getElementById('map-image').classList.remove('hidden'); document.getElementById('map-image').style.setProperty('--map-background-image', `url(${reader.result})`); document.getElementById('map-image').classList.add('custom'); showToast('画像マップへ戻しました'); }; reader.readAsDataURL(file); });
-renderMap(); renderDetail(); loadMapImage(); loadMapSource(); loadCsvCandidates(); loadWorkbookCandidates();
+renderMap(); renderDetail(); loadMapImage(); loadMapSource(); loadCsvCandidates(); loadWorkbookCandidates(); loadWeather();
+
+function getMarketInfo(cropName) { const text = String(cropName || ''); const key = Object.keys(marketData).find(name => text.includes(name)); return key ? marketData[key] : { trend: '情報なし', trendClass: 'flat', change: 'データ準備中', advice: 'この作物の相場データは準備中です。' }; }
+function renderMarketForecast(field) {
+  const info = getMarketInfo(field.crop);
+  const badge = document.getElementById('market-trend-badge');
+  badge.textContent = info.trend;
+  badge.className = `market-trend-badge ${info.trendClass}`;
+  document.getElementById('market-change').textContent = info.change;
+  document.getElementById('market-advice').textContent = info.advice;
+}
+
+function renderWorkProcess(field) {
+  const groups = field.workProcess && Array.isArray(field.workProcess.poleGroups) ? field.workProcess.poleGroups : [];
+  document.getElementById('work-process-summary').textContent = `${groups.length}グループ`;
+  document.getElementById('work-process-list').innerHTML = groups.length ? groups.map(group => `<div class="work-pole-group"><div class="work-pole-header"><strong>${group.range || 'ポール範囲未設定'}</strong><span>${group.area || '面積未設定'}</span></div><div class="work-pole-crop">${group.crop || '作物未設定'}${group.variety ? ` ${group.variety}` : ''}</div><ul class="work-checklist">${group.tasks.map(task => `<li class="${task.date ? 'done' : ''}"><span>${task.name}</span><span>${task.date ? formatDate(task.date) : '未定'}</span></li>`).join('')}</ul>${group.memo ? `<p class="work-memo">${group.memo}</p>` : ''}<div class="work-temp-row"><span>積算温度：${group.accumulatedTemp || '未設定'}</span><span>適正生育温度：${group.idealTemp || '未設定'}</span></div></div>`).join('') : '<div class="column-empty">作業工程データ未登録<br><small>Excelの「作業詳細-1」シートを読み込むと表示されます。</small></div>';
+}
+
+// Open-Meteo（APIキー不要）から本日・3日間の気象情報を取得
+function describeWeatherCode(code) { return weatherCodeMap[code] || ['🌡', '---']; }
+async function loadWeather() {
+  try {
+    const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=35.68&longitude=139.69&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Asia%2FTokyo&forecast_days=3', { cache: 'no-store' });
+    if (!response.ok) throw new Error('weather fetch failed');
+    const data = await response.json();
+    const [icon, desc] = describeWeatherCode(data.daily.weathercode[0]);
+    document.getElementById('weather-icon').textContent = icon;
+    document.getElementById('weather-temp').textContent = `${Math.round(data.daily.temperature_2m_max[0])}°C`;
+    document.getElementById('weather-desc').textContent = desc;
+    document.getElementById('weather-high').textContent = `${Math.round(data.daily.temperature_2m_max[0])}°C`;
+    document.getElementById('weather-low').textContent = `${Math.round(data.daily.temperature_2m_min[0])}°C`;
+    document.getElementById('weather-precip').textContent = `${data.daily.precipitation_sum[0]}mm`;
+    const dayLabels = ['今日', '明日', '明後日'];
+    document.getElementById('weather-forecast').innerHTML = data.daily.time.map((date, index) => { const [dayIcon, dayDesc] = describeWeatherCode(data.daily.weathercode[index]); return `<div class="weather-day-row"><span>${dayLabels[index] || date}</span><span>${dayIcon} ${dayDesc}</span><span>${Math.round(data.daily.temperature_2m_max[index])}° / ${Math.round(data.daily.temperature_2m_min[index])}°</span></div>`; }).join('');
+    document.getElementById('weather-note').textContent = 'Open-Meteoの気象データを表示しています。';
+  } catch {
+    document.getElementById('weather-note').textContent = '気象データを取得できませんでした（オフラインまたは通信エラー）。';
+  }
+}
