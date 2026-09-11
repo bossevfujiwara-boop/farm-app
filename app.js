@@ -58,7 +58,6 @@ defaultFields.push(...greenhouseFields);
 let fields = loadFields();
 let selectedId = 'a';
 let currentMonth = 3;
-const fieldPositions = { a: [3, 8, 17, 20], b: [22, 8, 17, 20], c: [41, 8, 17, 20], d: [60, 8, 17, 20], e1: [79, 8, 17, 20], e2: [3, 37, 17, 20], f: [22, 37, 17, 20], g: [41, 37, 17, 20], h: [60, 37, 17, 20], i: [79, 37, 17, 20], j: [3, 66, 17, 20], k: [22, 66, 17, 20], l1: [41, 66, 17, 20], l2: [60, 66, 17, 20], m: [79, 66, 17, 20], n: [41, 8, 17, 20], o: [60, 8, 17, 20], bhouse: [3, 89, 17, 9], chouse: [22, 89, 17, 9], ghouse: [41, 89, 17, 9], gyu: [60, 89, 17, 9], hhouse: [79, 89, 17, 9], m1: [79, 52, 9, 11], m2: [89, 52, 9, 11], m3: [79, 64, 9, 11], m4: [89, 64, 9, 11] };
 
 function normalizePolePlan(poles) { let previous = {}; return (poles || []).map(pole => { const normalized = { ...previous, ...pole }; for (const key of ['crop', 'planting', 'count', 'spacing', 'bed', 'mulch', 'work']) if (normalized[key] === '〃') normalized[key] = previous[key] || ''; previous = normalized; return normalized; }); }
 function applyLatestOverrides(records) { return records.map(field => ({ ...field, ...(latestOverrides[field.id] || {}), poles: normalizePolePlan(field.poles || detailedPolePlans[field.id] || []) })); }
@@ -69,12 +68,12 @@ function statusText(status) { return { growing: '栽培中', soon: '収穫間近
 function normalizeFieldId(value) { return String(value || '').trim().toLowerCase().replace(/区画/g, ''); }
 function normalizeDateValue(value) { const text = String(value || '').trim().replace(/[年月]/g, '-').replace(/日/g, '').replaceAll('/', '-'); const match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); return match ? `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}` : text; }
 function formatSpacing(value) { const text = String(value || '').trim(); return text ? (text.startsWith('株間') ? text : `株間${text}`) : ''; }
-function getFieldPosition(field, index) { if (fieldPositions[field.id]) return fieldPositions[field.id]; const columns = 3; const width = 25; const height = 29; return [8 + (index % columns) * 31, 10 + Math.floor(index / columns) * 43, width, height]; }
 
+// 座標指定なしのFlexboxカード一覧。要素の物理的な重なりが起こらない
 function renderMap() {
-  const container = document.getElementById('field-labels');
-  container.innerHTML = fields.map((field, index) => { const [x, y, w, h] = getFieldPosition(field, index); return `<button class="field-button ${field.status} ${field.id === selectedId ? 'selected' : ''}" data-id="${field.id}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"><span class="field-name">${field.id.toUpperCase()}区画</span><span class="field-crop">${field.crop}</span></button>`; }).join('');
-  container.querySelectorAll('.field-button').forEach(button => button.addEventListener('click', () => { selectedId = button.dataset.id; renderMap(); renderDetail(); }));
+  const container = document.getElementById('field-card-row');
+  container.innerHTML = fields.map(field => `<button class="field-card ${field.status} ${field.id === selectedId ? 'selected' : ''}" data-id="${field.id}"><span class="field-card-name">${field.id.toUpperCase()}区画</span><span class="field-card-crop">${field.crop || '未設定'}</span></button>`).join('');
+  container.querySelectorAll('.field-card').forEach(button => button.addEventListener('click', () => { selectedId = button.dataset.id; renderMap(); renderDetail(); }));
   document.getElementById('active-count').textContent = fields.filter(field => field.status !== 'empty').length;
   document.getElementById('total-area').textContent = fields.reduce((total, field) => total + (Number.parseFloat(String(field.area || '').replace(',', '')) || 0), 0).toLocaleString('ja-JP');
 }
