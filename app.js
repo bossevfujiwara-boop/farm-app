@@ -21,20 +21,26 @@ const defaultFields = [
 const mapImageCandidates = ['20260910_085313.jpg', 'data/20260910_085313.jpg'];
 const csvCandidates = ['schedule.csv', 'data/schedule.csv'];
 const latestOverrides = { n: { crop: 'サツマイモ', variety: '紅はるか、安納芋', status: 'growing', work: '栽培中', nextCrop: 'ニンニク(新植)', nextVariety: '蒼山種', nextPlanting: '9月-11月', nextHarvest: '種まき後35-50日（翌年5月-6月）' } };
-// 主要野菜の相場観ダミーデータ（作物名の部分一致で判定）
-const marketData = {
-  'きゅうり': { trend: '高騰傾向', trendClass: 'up', change: '前年比 +15%', advice: '価格が高い今のうちに計画的な出荷を進めましょう。' },
-  'ミニトマト': { trend: '平年並み', trendClass: 'flat', change: '平年比 +2%', advice: '相場は安定。品質重視の出荷で単価を維持しましょう。' },
-  'トマト': { trend: '平年並み', trendClass: 'flat', change: '平年比 +1%', advice: '大きな変動なし。通常の出荷計画で問題ありません。' },
-  'にら': { trend: '安値圈', trendClass: 'down', change: '前年比 -8%', advice: '出荷時期を数日遅らせるか、直売所など別販路も検討しましょう。' },
-  'サツマイモ': { trend: 'やや高値', trendClass: 'up', change: '平年比 +6%', advice: '貯蔵性が高いため、価格動向を見ながら出荷時期を調整できます。' },
-  'じゃがいも': { trend: '平年並み', trendClass: 'flat', change: '平年比 ±0%', advice: '需給は安定。定期出荷を継続しましょう。' },
-  'キャベツ': { trend: '安値圈', trendClass: 'down', change: '前年比 -12%', advice: '出荷量を押えるか、加工・業務用向け販路の確保がおすすめです。' },
-  'スイカ': { trend: '高騰傾向', trendClass: 'up', change: '前年比 +10%', advice: '需要期に向けて出荷タイミングを前倒しできないか検討しましょう。' },
-  '白菜': { trend: '平年並み', trendClass: 'flat', change: '平年比 -3%', advice: '大きな変動なし。通常の出荷計画で問題ありません。' },
-  '人参': { trend: 'やや高値', trendClass: 'up', change: '平年比 +7%', advice: '価格が上向き傾向のため出荷量を増やす好機です。' },
-  'にんじん': { trend: 'やや高値', trendClass: 'up', change: '平年比 +7%', advice: '価格が上向き傾向のため出荷量を増やす好機です。' }
+// 東京都中央卸売市場・農水省の市況データ取得先（未設定の間はキャッシュ→フォールバックの順で表示）
+const marketDataSourceUrl = '';
+const marketDataCacheKey = 'farmnote-market-cache-v1';
+// 主要野菜の相場観フォールバックデータ（実データ取得不可時の参考値。作物名の部分一致で判定）
+const marketFallbackData = {
+  'きゅうり': { price: 420, unit: '円/kg', yoy: 15, avgRatio: 8, trend: '高騰傾向', trendClass: 'up', advice: '価格が高い今のうちに計画的な出荷を進めましょう。' },
+  'ミニトマト': { price: 680, unit: '円/kg', yoy: 2, avgRatio: 1, trend: '平年並み', trendClass: 'flat', advice: '相場は安定。品質重視の出荷で単価を維持しましょう。' },
+  'トマト': { price: 350, unit: '円/kg', yoy: 1, avgRatio: -1, trend: '平年並み', trendClass: 'flat', advice: '大きな変動なし。通常の出荷計画で問題ありません。' },
+  'にら': { price: 560, unit: '円/kg', yoy: -8, avgRatio: -6, trend: '安値圏', trendClass: 'down', advice: '出荷時期を数日遅らせるか、直売所など別販路も検討しましょう。' },
+  'サツマイモ': { price: 310, unit: '円/kg', yoy: 6, avgRatio: 4, trend: 'やや高値', trendClass: 'up', advice: '貯蔵性が高いため、価格動向を見ながら出荷時期を調整できます。' },
+  'じゃがいも': { price: 240, unit: '円/kg', yoy: 0, avgRatio: 0, trend: '平年並み', trendClass: 'flat', advice: '需給は安定。定期出荷を継続しましょう。' },
+  'キャベツ': { price: 150, unit: '円/kg', yoy: -12, avgRatio: -9, trend: '安値圏', trendClass: 'down', advice: '出荷量を抑えるか、加工・業務用向け販路の確保がおすすめです。' },
+  'スイカ': { price: 190, unit: '円/kg', yoy: 10, avgRatio: 5, trend: '高騰傾向', trendClass: 'up', advice: '需要期に向けて出荷タイミングを前倒しできないか検討しましょう。' },
+  '白菜': { price: 130, unit: '円/kg', yoy: -3, avgRatio: -2, trend: '平年並み', trendClass: 'flat', advice: '大きな変動なし。通常の出荷計画で問題ありません。' },
+  '人参': { price: 280, unit: '円/kg', yoy: 7, avgRatio: 4, trend: 'やや高値', trendClass: 'up', advice: '価格が上向き傾向のため出荷量を増やす好機です。' },
+  'にんじん': { price: 280, unit: '円/kg', yoy: 7, avgRatio: 4, trend: 'やや高値', trendClass: 'up', advice: '価格が上向き傾向のため出荷量を増やす好機です。' }
 };
+let liveMarketData = null;
+let marketDataStatus = 'fallback';
+let marketDataUpdatedAt = null;
 // Open-Meteo（APIキー不要）の天気コード対応表
 const weatherCodeMap = { 0: ['☀', '快晴'], 1: ['🌤', '晴れ'], 2: ['⛅', '薄曇り'], 3: ['☁', '曇り'], 45: ['🌫', '霧'], 48: ['🌫', '霧'], 51: ['🌦', '小雨'], 53: ['🌦', '小雨'], 55: ['🌧', '雨'], 61: ['🌦', '雨'], 63: ['🌧', '雨'], 65: ['🌧', '大雨'], 71: ['🌨', '雪'], 73: ['🌨', '雪'], 75: ['❄', '大雪'], 80: ['🌦', 'にわか雨'], 81: ['🌧', 'にわか雨'], 82: ['⛈', '激しい雨'], 95: ['⛈', '雷雨'] };
 // 「作業詳細-1」シート読込前のサンプル（A圃場：提示された実数値のみ反映、未確定の日付は未定表示）
@@ -232,16 +238,47 @@ document.getElementById('xlsx-input').addEventListener('change', event => { cons
 document.getElementById('apply-map-url').addEventListener('click', () => setMapSource(document.getElementById('map-url').value));
 document.getElementById('use-image-map').addEventListener('click', () => { localStorage.removeItem('farmnote-map-embed-url'); document.getElementById('map-url').value = ''; setMapSource(''); });
 document.getElementById('map-input').addEventListener('change', event => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { localStorage.removeItem('farmnote-map-embed-url'); document.getElementById('map-url').value = ''; document.getElementById('map-iframe').classList.add('hidden'); document.getElementById('map-iframe').removeAttribute('src'); document.getElementById('map-image').classList.remove('hidden'); document.getElementById('map-image').style.setProperty('--map-background-image', `url(${reader.result})`); document.getElementById('map-image').classList.add('custom'); showToast('画像マップへ戻しました'); }; reader.readAsDataURL(file); });
-renderMap(); renderDetail(); loadMapImage(); loadMapSource(); loadCsvCandidates(); loadWorkbookCandidates(); loadWeather();
+renderMap(); renderDetail(); loadMapImage(); loadMapSource(); loadCsvCandidates(); loadWorkbookCandidates(); loadWeather(); loadMarketData();
 
-function getMarketInfo(cropName) { const text = String(cropName || ''); const key = Object.keys(marketData).find(name => text.includes(name)); return key ? marketData[key] : { trend: '情報なし', trendClass: 'flat', change: 'データ準備中', advice: 'この作物の相場データは準備中です。' }; }
+function getMarketInfo(cropName) { const text = String(cropName || ''); const source = liveMarketData || marketFallbackData; const key = Object.keys(source).find(name => text.includes(name)); return key ? source[key] : { trend: '情報なし', trendClass: 'flat', price: null, unit: '', yoy: null, avgRatio: null, advice: 'この作物の相場データは準備中です。' }; }
 function renderMarketForecast(field) {
   const info = getMarketInfo(field.crop);
   const badge = document.getElementById('market-trend-badge');
   badge.textContent = info.trend;
   badge.className = `market-trend-badge ${info.trendClass}`;
-  document.getElementById('market-change').textContent = info.change;
+  document.getElementById('market-price').textContent = info.price != null ? `${info.price.toLocaleString('ja-JP')}${info.unit || '円/kg'}` : '未設定';
+  const formatRatio = value => value == null ? '未設定' : `${value > 0 ? '+' : ''}${value}%`;
+  document.getElementById('market-change').textContent = info.yoy != null ? `前年比 ${formatRatio(info.yoy)} / 平年比 ${formatRatio(info.avgRatio)}` : 'データ準備中';
   document.getElementById('market-advice').textContent = info.advice;
+  const sourceLabels = { live: '最新相場データ（自動取得）', cache: `前回取得データのキャッシュ${marketDataUpdatedAt ? `（${marketDataUpdatedAt.toLocaleString('ja-JP')}時点）` : ''}`, fallback: '参考値（サンプルデータ・実データ未取得）' };
+  document.getElementById('market-source-note').textContent = sourceLabels[marketDataStatus] || '';
+}
+
+// 東京都中央卸売市場・農水省の市況データ取得（未設定/取得失敗時はキャッシュ→フォールバックへ自動切替）
+async function fetchMarketData() {
+  if (!marketDataSourceUrl) return null;
+  const response = await fetch(marketDataSourceUrl, { cache: 'no-store' });
+  if (!response.ok) throw new Error(`market data request failed: ${response.status}`);
+  const payload = await response.json();
+  if (!payload || typeof payload !== 'object') throw new Error('invalid market data payload');
+  return payload;
+}
+function saveMarketCache(data) { try { localStorage.setItem(marketDataCacheKey, JSON.stringify({ data, savedAt: Date.now() })); } catch { } }
+function loadMarketCache() { try { const raw = JSON.parse(localStorage.getItem(marketDataCacheKey) || 'null'); return raw && raw.data ? raw : null; } catch { return null; } }
+async function loadMarketData() {
+  try {
+    const fetched = await fetchMarketData();
+    if (!fetched) throw new Error('no market data source configured');
+    liveMarketData = fetched; marketDataStatus = 'live'; marketDataUpdatedAt = new Date();
+    saveMarketCache(fetched);
+  } catch (error) {
+    console.warn('市場価格データを取得できませんでした。キャッシュ/フォールバックを使用します。', error);
+    const cached = loadMarketCache();
+    if (cached) { liveMarketData = cached.data; marketDataStatus = 'cache'; marketDataUpdatedAt = new Date(cached.savedAt); }
+    else { liveMarketData = null; marketDataStatus = 'fallback'; marketDataUpdatedAt = null; }
+  }
+  const selectedField = fields.find(item => item.id === selectedId);
+  if (selectedField) renderMarketForecast(selectedField);
 }
 
 function getTemperatureTarget(cropName) { const text = String(cropName || ''); const key = Object.keys(cropTemperatureTargets).find(name => text.includes(name)); return key ? cropTemperatureTargets[key] : null; }
