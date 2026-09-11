@@ -50,6 +50,24 @@ const workProcessSeeds = {
       ], memo: '2品種を作付け。品種ごとの生育差に注意。', accumulatedTemp: '未設定', idealTemp: '15〜20℃（一般的な目安）' }
   ] }
 };
+// 収穫までの目標積算温度（base：生育開始基準温度、target：base超過分の積算値目安）。「作業詳細-1」シート読込前の一般的な目安値
+const cropTemperatureTargets = {
+  'にら': { base: 5, target: 800 },
+  'じゃがいも': { base: 5, target: 1500 },
+  'スイカ': { base: 10, target: 1900 },
+  'にんじん': { base: 5, target: 1100 },
+  '人参': { base: 5, target: 1100 },
+  'ミニトマト': { base: 8, target: 1200 },
+  'トマト': { base: 8, target: 1200 },
+  'キャベツ': { base: 5, target: 1000 },
+  '白菜': { base: 5, target: 950 },
+  'きゅうり': { base: 10, target: 900 },
+  'サツマイモ': { base: 10, target: 2500 },
+  '枝豆': { base: 8, target: 900 },
+  'オクラ': { base: 12, target: 1000 },
+  'モロヘイヤ': { base: 12, target: 1000 }
+};
+let currentAverageTemp = null;
 const poleDataPendingIds = new Set(['m']);
 const detailedPolePlans = { l1: Array.from({ length: 26 }, (_, index) => { const pole = index + 1; const lengths = ['95.7m', '88.6m', '91.2m', '86.4m', '82.1m', '79.8m']; const contents = [
   ['きゅうり(自根)', '4/29', '380本', '株間40cm'], ['〃', '〃', '380本', '株間40cm'], ['きゅうり(接木)', '5/6', '760本', '株間40cm'], ['〃', '〃', '760本', '株間40cm'],
@@ -127,6 +145,7 @@ function renderDetail() {
   document.getElementById('selected-next-timing').textContent = field.nextPlanting || '未設定';
   document.getElementById('selected-next-harvest').textContent = field.nextHarvest || '未設定';
   renderMarketForecast(field);
+  renderTemperatureTracker(field);
   renderWorkProcess(field);
   renderRowPlan(field);
 }
@@ -225,6 +244,41 @@ function renderMarketForecast(field) {
   document.getElementById('market-advice').textContent = info.advice;
 }
 
+function getTemperatureTarget(cropName) { const text = String(cropName || ''); const key = Object.keys(cropTemperatureTargets).find(name => text.includes(name)); return key ? cropTemperatureTargets[key] : null; }
+function computeAccumulatedTemperature(field) {
+  const target = getTemperatureTarget(field.crop);
+  if (!target || !field.planting) return null;
+  const referenceToday = new Date('2027-04-12T00:00:00');
+  const plantingDate = new Date(`${field.planting}T00:00:00`);
+  const daysElapsed = Math.max(0, Math.round((referenceToday - plantingDate) / 86400000));
+  const dailyAverageTemp = currentAverageTemp ?? 18;
+  const dailyGdd = Math.max(dailyAverageTemp - target.base, 0);
+  const accumulated = Math.round(daysElapsed * dailyGdd);
+  const progress = Math.min(100, Math.round((accumulated / target.target) * 100));
+  const remainingGdd = Math.max(0, target.target - accumulated);
+  const remainingDays = dailyGdd > 0 ? Math.ceil(remainingGdd / dailyGdd) : null;
+  const estimatedHarvest = remainingDays !== null ? new Date(referenceToday.getTime() + remainingDays * 86400000) : null;
+  return { accumulated, target: target.target, progress, estimatedHarvest, usingFallbackTemp: currentAverageTemp === null };
+}
+function renderTemperatureTracker(field) {
+  const result = computeAccumulatedTemperature(field);
+  const fillEl = document.getElementById('temp-progress-fill');
+  if (!result) {
+    document.getElementById('temp-current').textContent = '未設定';
+    document.getElementById('temp-target').textContent = '未設定';
+    document.getElementById('temp-progress-text').textContent = '0%';
+    fillEl.style.width = '0%';
+    document.getElementById('temp-tracker-note').textContent = 'この作物の積算温度データは未登録です。';
+    return;
+  }
+  document.getElementById('temp-current').textContent = `${result.accumulated}℃`;
+  document.getElementById('temp-target').textContent = `${result.target}℃`;
+  document.getElementById('temp-progress-text').textContent = `${result.progress}%`;
+  fillEl.style.width = `${result.progress}%`;
+  const harvestText = result.progress >= 100 ? '収穫適期です' : result.estimatedHarvest ? `予想収穫時期：${result.estimatedHarvest.getFullYear()}.${result.estimatedHarvest.getMonth() + 1}.${result.estimatedHarvest.getDate()}` : '予想収穫時期：算出不可';
+  document.getElementById('temp-tracker-note').textContent = `${harvestText}${result.usingFallbackTemp ? '（気象データ取得前のため仮の平均気温18℃で計算）' : '（気象データの当日平均気温をもとに計算）'}`;
+}
+
 function renderWorkProcess(field) {
   const groups = field.workProcess && Array.isArray(field.workProcess.poleGroups) ? field.workProcess.poleGroups : [];
   document.getElementById('work-process-summary').textContent = `${groups.length}グループ`;
@@ -248,6 +302,9 @@ async function loadWeather() {
     const dayLabels = ['今日', '明日', '明後日'];
     document.getElementById('weather-forecast').innerHTML = data.daily.time.map((date, index) => { const [dayIcon, dayDesc] = describeWeatherCode(data.daily.weathercode[index]); return `<div class="weather-day-row"><span>${dayLabels[index] || date}</span><span>${dayIcon} ${dayDesc}</span><span>${Math.round(data.daily.temperature_2m_max[index])}° / ${Math.round(data.daily.temperature_2m_min[index])}°</span></div>`; }).join('');
     document.getElementById('weather-note').textContent = 'Open-Meteoの気象データを表示しています。';
+    currentAverageTemp = (data.daily.temperature_2m_max[0] + data.daily.temperature_2m_min[0]) / 2;
+    const selectedField = fields.find(item => item.id === selectedId);
+    if (selectedField) renderTemperatureTracker(selectedField);
   } catch {
     document.getElementById('weather-note').textContent = '気象データを取得できませんでした（オフラインまたは通信エラー）。';
   }
