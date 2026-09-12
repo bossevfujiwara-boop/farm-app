@@ -20,6 +20,7 @@ const defaultFields = [
 const mapImageCandidates = ['20260910_085313.jpg', 'data/20260910_085313.jpg'];
 const csvCandidates = ['schedule.csv', 'data/schedule.csv'];
 const latestOverrides = { n: { crop: 'サツマイモ', variety: '紅はるか、安納芋', status: 'growing', work: '栽培中', nextCrop: 'ニンニク(新植)', nextVariety: '蒼山種', nextPlanting: '9月-11月', nextHarvest: '種まき後35-50日（翌年5月-6月）' } };
+const removedFieldIds = new Set(['gyu']);
 // 東京都中央卸売市場・農水省の市況データ取得先（未設定の間はキャッシュ→フォールバックの順で表示）
 const marketDataSourceUrl = '';
 const marketDataCacheKey = 'farmnote-market-cache-v1';
@@ -102,7 +103,6 @@ const greenhouseFields = [
   { id: 'g3', crop: 'スイカ', variety: 'G3ハウス', area: '861.6㎡（Gハウス全体）', work: '47本 / 長さ71.8m × 幅12m / ハウス', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '71.8m', 'スイカ', '', '47本') },
   { id: 'g4', crop: 'メロン', variety: 'G4ハウス', area: '861.6㎡（Gハウス全体）', work: '79本 / 長さ71.8m × 幅12m / ハウス', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '71.8m', 'メロン', '', '79本') },
   { id: 'gout', crop: 'ニラ', variety: 'G区画', area: '182㎡', work: '長さ50.2m × 幅3.5m / 露地', planting: '', harvest: '', status: 'growing', symbol: '🌿', progress: 0, poles: makePolePlan(1, '50.2m', 'ニラ', '', '仕様参照') },
-  { id: 'gyu', crop: 'ニラ', variety: 'G夕', area: '', work: '栽培中', planting: '', harvest: '', status: 'growing', symbol: '🌿', progress: 0, poles: makePolePlan(1, '50.2m', 'ニラ', '', '仕様参照') },
   { id: 'hhouse', crop: 'ハウス作付', variety: 'Hハウス', area: '', work: '詳細図面参照', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '19.2m', 'Hハウス作付', '', '仕様参照') },
   { id: 'm1', crop: 'メロン / スイカ', variety: 'M1ハウス', area: '29.2m × 9m（35.5m枠）', work: '両端 メロン35本・30本 / 中央2列 スイカ29本・25本', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: [
     { pole: 'ポール↑1', length: '35.5m', crop: 'メロン', planting: '', count: '35本', spacing: '株間指定', bed: '畝1', mulch: '黒マルチ', work: '定植済み' },
@@ -130,7 +130,7 @@ let selectedId = 'a';
 let currentMonth = 3;
 
 function normalizePolePlan(poles) { let previous = {}; return (poles || []).map(pole => { const normalized = { ...previous, ...pole }; for (const key of ['crop', 'planting', 'count', 'spacing', 'bed', 'mulch', 'work']) if (normalized[key] === '〃') normalized[key] = previous[key] || ''; previous = normalized; return normalized; }); }
-function applyLatestOverrides(records) { return records.map(field => ({ ...field, ...(latestOverrides[field.id] || {}), poles: normalizePolePlan(field.poles || detailedPolePlans[field.id] || []), workProcess: field.workProcess || workProcessSeeds[field.id] || null })); }
+function applyLatestOverrides(records) { return records.filter(field => !removedFieldIds.has(field.id)).map(field => ({ ...field, ...(latestOverrides[field.id] || {}), poles: normalizePolePlan(field.poles || detailedPolePlans[field.id] || []), workProcess: field.workProcess || workProcessSeeds[field.id] || null })); }
 function loadFields() { try { const stored = JSON.parse(localStorage.getItem('farmnote-fields-v3')); return applyLatestOverrides(stored && stored.length >= defaultFields.length ? stored.map(field => ({ ...field, id: normalizeFieldId(field.id) })) : structuredClone(defaultFields)); } catch { return applyLatestOverrides(structuredClone(defaultFields)); } }
 function saveFields() { localStorage.setItem('farmnote-fields-v3', JSON.stringify(fields)); document.getElementById('last-updated').textContent = '今 保存済み'; }
 function formatDate(date) { if (!date) return '未設定'; const [y, m, d] = date.split('-'); return `${y}.${m}.${d}`; }
