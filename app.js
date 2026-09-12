@@ -240,9 +240,29 @@ document.getElementById('use-image-map').addEventListener('click', () => { local
 document.getElementById('map-input').addEventListener('change', event => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { localStorage.removeItem('farmnote-map-embed-url'); document.getElementById('map-url').value = ''; document.getElementById('map-iframe').classList.add('hidden'); document.getElementById('map-iframe').removeAttribute('src'); document.getElementById('map-image').classList.remove('hidden'); document.getElementById('map-image').style.setProperty('--map-background-image', `url(${reader.result})`); document.getElementById('map-image').classList.add('custom'); showToast('画像マップへ戻しました'); }; reader.readAsDataURL(file); });
 renderMap(); renderDetail(); loadMapImage(); loadMapSource(); loadCsvCandidates(); loadWorkbookCandidates(); loadWeather(); loadMarketData();
 
-function getMarketInfo(cropName) { const text = String(cropName || ''); const source = liveMarketData || marketFallbackData; const key = Object.keys(source).find(name => text.includes(name)); return key ? source[key] : { trend: '情報なし', trendClass: 'flat', price: null, unit: '', yoy: null, avgRatio: null, advice: 'この作物の相場データは準備中です。' }; }
+// 全角カタカナをひらがな化して作物名の表記ゆれ（にら/ニラ等）を吸収
+function toHiragana(text) { return String(text || '').replace(/[\u30a1-\u30f6]/g, match => String.fromCharCode(match.charCodeAt(0) - 0x60)); }
+function getKnownCropNames() { return Object.keys(liveMarketData || marketFallbackData); }
+// テキスト中に含まれる既知作物名を、出現位置が早い順に抽出
+function extractKnownCropNames(text) { const source = toHiragana(text); return getKnownCropNames().map(name => ({ name, index: source.indexOf(toHiragana(name)) })).filter(entry => entry.index !== -1).sort((a, b) => a.index - b.index).map(entry => entry.name); }
+function getMarketInfo(cropName) { const source = liveMarketData || marketFallbackData; const key = extractKnownCropNames(cropName)[0]; return key ? source[key] : { trend: '情報なし', trendClass: 'flat', price: null, unit: '', yoy: null, avgRatio: null, advice: 'この作物の相場データは準備中です。' }; }
+// ポール列ごとの作物を集計し、最も列数が多い主要作物と対象ポール範囲を特定
+function getDominantCrop(field) {
+  const label = `${field.id.toUpperCase()}区画`;
+  const poles = Array.isArray(field.poles) ? field.poles.filter(pole => pole && pole.crop) : [];
+  if (!poles.length) { const names = extractKnownCropNames(field.crop); return { crop: names[0] || field.crop || '', range: label }; }
+  const counts = new Map();
+  poles.forEach(pole => { const primary = extractKnownCropNames(pole.crop)[0]; if (primary) counts.set(primary, (counts.get(primary) || 0) + 1); });
+  if (!counts.size) { const names = extractKnownCropNames(field.crop); return { crop: names[0] || field.crop || '', range: label }; }
+  const dominantCrop = [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  const poleNumbers = poles.filter(pole => extractKnownCropNames(pole.crop)[0] === dominantCrop).map(pole => Number(String(pole.pole).replace(/[^0-9]/g, ''))).filter(number => !Number.isNaN(number));
+  const range = poleNumbers.length ? (Math.min(...poleNumbers) === Math.max(...poleNumbers) ? `${label}・ポール↑${Math.min(...poleNumbers)}` : `${label}・ポール↑${Math.min(...poleNumbers)}〜↑${Math.max(...poleNumbers)}`) : label;
+  return { crop: dominantCrop, range };
+}
 function renderMarketForecast(field) {
-  const info = getMarketInfo(field.crop);
+  const dominant = getDominantCrop(field);
+  const info = getMarketInfo(dominant.crop);
+  document.getElementById('market-target-crop').textContent = dominant.crop ? `対象品目：${dominant.crop}（${dominant.range}）` : `対象品目：未特定（${dominant.range}）`;
   const badge = document.getElementById('market-trend-badge');
   badge.textContent = info.trend;
   badge.className = `market-trend-badge ${info.trendClass}`;
