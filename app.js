@@ -6,7 +6,6 @@ const defaultFields = [
   { id: 'e1', crop: '休耕', variety: '土づくり中', area: '60㎡', work: '堆肥散布', planting: '', harvest: '', status: 'empty', symbol: '—', progress: 0 },
   { id: 'e2', crop: '枝豆', variety: '湯あがり娘', area: '70㎡', work: '播種準備', planting: '2027-04-05', harvest: '2027-06-20', status: 'growing', symbol: '🌱', progress: 20 },
   { id: 'f', crop: 'にら', variety: 'ワンダーグリーン', area: '75㎡', work: '収穫・追肥', planting: '2027-02-20', harvest: '2027-04-25', status: 'soon', symbol: '🌿', progress: 88 },
-  { id: 'g', crop: 'じゃがいも', variety: '男爵', area: '110㎡', work: '土寄せ', planting: '2027-03-03', harvest: '2027-06-08', status: 'growing', symbol: '🥔', progress: 34 },
   { id: 'h', crop: 'スイカ', variety: '黒皮大玉', area: '180㎡', work: 'マルチ張り', planting: '2027-04-18', harvest: '2027-08-01', status: 'growing', symbol: '🍉', progress: 12 },
   { id: 'i', crop: 'ミニトマト', variety: 'アイコ', area: '95㎡', work: '支柱立て', planting: '2027-03-28', harvest: '2027-07-05', status: 'growing', symbol: '🍅', progress: 25 },
   { id: 'j', crop: 'きゅうり', variety: '夏すずみ', area: '85㎡', work: 'ネット設置', planting: '2027-04-10', harvest: '2027-06-28', status: 'growing', symbol: '🥒', progress: 17 },
@@ -87,7 +86,6 @@ Object.assign(detailedPolePlans, {
   e1: makePolePlan(18, pole => pole <= 7 ? '31.4m' : pole <= 15 ? '33.1m' : pole <= 17 ? '21.6m' : '16.5m', 'トマト', '07/17', '700本', '株間指定'),
   e2: makePolePlan(5, '44.1m', 'アスパラ', '定植日指定', '列ごと本数指定', '株間指定'),
   f: makePolePlan(23, pole => pole === 1 ? '17.9m' : pole <= 11 ? '50m' : pole <= 16 ? '69.7m' : '15.5m', '人参 / ピーマン / しし唐', '5/25、5/28、6/5', '本数・列数指定', '株間指定'),
-  g: makePolePlan(4, ['71.8m', '71.8m', '71.8m', '71.8m'], 'サツマイモ / 準備中 / スイカ47本 / メロン79本', '作付計画参照', 'G1〜G4内訳', '仕様指定'),
   h: makePolePlan(23, '24.0m', 'メロン / スイカ / しし唐 / トウモロコシ / インゲン豆', '5/2、5/10、5/15、5/28、6/6', '列ごと本数指定', '株間指定'),
   i: makePolePlan(18, '171.6m', 'トマト / スイートバジル / ホーリーバジル / 白菜 / サツマイモ / 里芋', '4/25、6/10、6/18、6/25', '本数・列数指定', '株間指定'),
   j: makePolePlan(18, '171.6m', 'トマト / スイートバジル / ホーリーバジル / 白菜 / サツマイモ / 里芋', '4/25、6/10、6/18、6/25', '本数・列数指定', '株間指定'),
@@ -99,7 +97,11 @@ Object.assign(detailedPolePlans, {
 const greenhouseFields = [
   { id: 'bhouse', crop: 'スイカ', variety: 'Bハウス', area: '188.55㎡', work: '定植済み', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '41.9m', 'スイカ', '', '28本', '株間80cm') },
   { id: 'chouse', crop: 'ハウス作付', variety: 'Cハウス', area: '237.64㎡', work: '5.2m幅', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '45.7m', 'Cハウス作付', '', '仕様参照', '幅5.2m') },
-  { id: 'ghouse', crop: 'サツマイモ / 準備中 / スイカ / メロン', variety: 'Gハウス G1〜G4', area: '', work: 'G3 スイカ47本 / G4 メロン79本', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(4, '71.8m', 'G1 サツマイモ / G2 準備中 / G3 スイカ47本 / G4 メロン79本', '', 'G1〜G4内訳') },
+  { id: 'g1', crop: 'サツマイモ', variety: 'G1ハウス', area: '861.6㎡（Gハウス全体）', work: '長さ71.8m × 幅12m / ハウス', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '71.8m', 'サツマイモ', '', '仕様参照') },
+  { id: 'g2', crop: '準備中', variety: 'G2ハウス', area: '861.6㎡（Gハウス全体）', work: '長さ71.8m × 幅12m / ハウス', planting: '', harvest: '', status: 'preparing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '71.8m', '準備中', '', '未設定', '未設定', '準備中') },
+  { id: 'g3', crop: 'スイカ', variety: 'G3ハウス', area: '861.6㎡（Gハウス全体）', work: '47本 / 長さ71.8m × 幅12m / ハウス', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '71.8m', 'スイカ', '', '47本') },
+  { id: 'g4', crop: 'メロン', variety: 'G4ハウス', area: '861.6㎡（Gハウス全体）', work: '79本 / 長さ71.8m × 幅12m / ハウス', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '71.8m', 'メロン', '', '79本') },
+  { id: 'gout', crop: 'ニラ', variety: 'G外（ジーガイ）', area: '182㎡', work: '長さ50.2m × 幅3.5m / 露地（ハウス外）', planting: '', harvest: '', status: 'growing', symbol: '🌿', progress: 0, poles: makePolePlan(1, '50.2m', 'ニラ', '', '仕様参照') },
   { id: 'gyu', crop: 'ニラ', variety: 'G夕', area: '', work: '栽培中', planting: '', harvest: '', status: 'growing', symbol: '🌿', progress: 0, poles: makePolePlan(1, '50.2m', 'ニラ', '', '仕様参照') },
   { id: 'hhouse', crop: 'ハウス作付', variety: 'Hハウス', area: '', work: '詳細図面参照', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '19.2m', 'Hハウス作付', '', '仕様参照') },
   { id: 'm1', crop: 'メロン / スイカ', variety: 'M1ハウス', area: '29.2m × 9m（35.5m枠）', work: '両端 メロン35本・30本 / 中央2列 スイカ29本・25本', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: [
@@ -132,9 +134,9 @@ function applyLatestOverrides(records) { return records.map(field => ({ ...field
 function loadFields() { try { const stored = JSON.parse(localStorage.getItem('farmnote-fields-v3')); return applyLatestOverrides(stored && stored.length >= defaultFields.length ? stored.map(field => ({ ...field, id: normalizeFieldId(field.id) })) : structuredClone(defaultFields)); } catch { return applyLatestOverrides(structuredClone(defaultFields)); } }
 function saveFields() { localStorage.setItem('farmnote-fields-v3', JSON.stringify(fields)); document.getElementById('last-updated').textContent = '今 保存済み'; }
 function formatDate(date) { if (!date) return '未設定'; const [y, m, d] = date.split('-'); return `${y}.${m}.${d}`; }
-function statusText(status) { return { growing: '栽培中', soon: '収穫間近', empty: '空き' }[status] || '栽培中'; }
+function statusText(status) { return { growing: '栽培中', soon: '収穫間近', preparing: '準備中', empty: '空き' }[status] || '栽培中'; }
 function normalizeFieldId(value) { return String(value || '').trim().toLowerCase().replace(/区画/g, ''); }
-function fieldDisplayName(fieldId) { const id = String(fieldId || '').trim(); const numberedGreenhouseMatch = id.match(/^m([1-6])$/i); if (numberedGreenhouseMatch) return `M${numberedGreenhouseMatch[1]}ハウス`; const greenhouseMatch = id.match(/^([a-z])house$/i); return greenhouseMatch ? `${greenhouseMatch[1].toUpperCase()}ハウス` : id.toUpperCase(); }
+function fieldDisplayName(fieldId) { const id = String(fieldId || '').trim(); const numberedGreenhouseMatch = id.match(/^m([1-6])$/i); if (numberedGreenhouseMatch) return `M${numberedGreenhouseMatch[1]}ハウス`; const gHouseMatch = id.match(/^g([1-4])$/i); if (gHouseMatch) return `G${gHouseMatch[1]}ハウス`; if (id === 'gout') return 'G外（ジーガイ）'; const greenhouseMatch = id.match(/^([a-z])house$/i); return greenhouseMatch ? `${greenhouseMatch[1].toUpperCase()}ハウス` : id.toUpperCase(); }
 function normalizeDateValue(value) { const text = String(value || '').trim().replace(/[年月]/g, '-').replace(/日/g, '').replaceAll('/', '-'); const match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); return match ? `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}` : text; }
 function formatSpacing(value) { const text = String(value || '').trim(); return text ? (text.startsWith('株間') ? text : `株間${text}`) : ''; }
 
