@@ -102,10 +102,25 @@ const greenhouseFields = [
   { id: 'ghouse', crop: 'サツマイモ / 準備中 / スイカ / メロン', variety: 'Gハウス G1〜G4', area: '', work: 'G3 スイカ47本 / G4 メロン79本', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(4, '71.8m', 'G1 サツマイモ / G2 準備中 / G3 スイカ47本 / G4 メロン79本', '', 'G1〜G4内訳') },
   { id: 'gyu', crop: 'ニラ', variety: 'G夕', area: '', work: '栽培中', planting: '', harvest: '', status: 'growing', symbol: '🌿', progress: 0, poles: makePolePlan(1, '50.2m', 'ニラ', '', '仕様参照') },
   { id: 'hhouse', crop: 'ハウス作付', variety: 'Hハウス', area: '', work: '詳細図面参照', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '19.2m', 'Hハウス作付', '', '仕様参照') },
-  { id: 'm1', crop: 'ハウス作付', variety: 'M1ハウス', area: '', work: '詳細図面参照', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '未設定', 'M1ハウス', '未設定', '未設定') },
-  { id: 'm2', crop: 'ハウス作付', variety: 'M2ハウス', area: '', work: '詳細図面参照', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '未設定', 'M2ハウス', '未設定', '未設定') },
-  { id: 'm3', crop: 'ハウス作付', variety: 'M3ハウス', area: '', work: '詳細図面参照', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '未設定', 'M3ハウス', '未設定', '未設定') },
-  { id: 'm4', crop: 'ハウス作付', variety: 'M4ハウス', area: '', work: '詳細図面参照', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '未設定', 'M4ハウス', '未設定', '未設定') }
+  { id: 'm1', crop: 'メロン / スイカ', variety: 'M1ハウス', area: '29.2m × 9m（35.5m枠）', work: '両端 メロン35本・30本 / 中央2列 スイカ29本・25本', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: [
+    { pole: 'ポール↑1', length: '35.5m', crop: 'メロン', planting: '', count: '35本', spacing: '株間指定', bed: '畝1', mulch: '黒マルチ', work: '定植済み' },
+    { pole: 'ポール↑2', length: '35.5m', crop: 'スイカ', planting: '5/2', count: '29本', spacing: '株間指定', bed: '畝2', mulch: '黒マルチ', work: '定植済み' },
+    { pole: 'ポール↑3', length: '35.5m', crop: 'スイカ', planting: '', count: '25本', spacing: '株間指定', bed: '畝3', mulch: '黒マルチ', work: '定植済み' },
+    { pole: 'ポール↑4', length: '35.5m', crop: 'メロン', planting: '', count: '30本', spacing: '株間指定', bed: '畝4', mulch: '黒マルチ', work: '定植済み' }
+  ] },
+  { id: 'm2', crop: 'スイカ / ボイラー / メロン', variety: 'M2ハウス', area: '220.5㎡', work: '24.5m × 9m / ポール1〜3', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: [
+    { pole: 'ポール↑1', length: '24.5m', crop: 'スイカ', planting: '5/23', count: '23本', bed: '畝1', work: '定植済み' },
+    { pole: 'ポール↑2', length: '24.5m', crop: 'ボイラー / メロン', planting: '5/25', count: '21本', bed: '畝2', work: '定植済み' },
+    { pole: 'ポール↑3', length: '24.5m', crop: 'メロン', planting: '5/23', count: '23本', bed: '畝3', work: '定植済み' }
+  ] },
+  { id: 'm3', crop: 'メロン / ボイラー / スイカ', variety: 'M3ハウス', area: '220.5㎡', work: '24.5m × 9m / ポール1〜3', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: [
+    { pole: 'ポール↑1', length: '24.5m', crop: 'メロン', planting: '5/23', count: '23本', bed: '畝1', work: '定植済み' },
+    { pole: 'ポール↑2', length: '24.5m', crop: 'ボイラー / スイカ', planting: '5/23', count: '21本', bed: '畝2', work: '定植済み' },
+    { pole: 'ポール↑3', length: '24.5m', crop: 'スイカ', planting: '5/23', count: '23本', bed: '畝3', work: '定植済み' }
+  ] },
+  { id: 'm4', crop: 'きゅうり', variety: 'M4ハウス', area: '220.5㎡', work: '24.5m × 9m / ポール1〜3 / 120本', planting: '2026-08-28', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(3, '24.5m', 'きゅうり', '2026-08-28', '120本', '株間指定') },
+  { id: 'm5', crop: '準備中 / 空き', variety: 'M5ハウス', area: '220.5㎡', work: '24.5m × 9m / ポール1〜3', planting: '', harvest: '', status: 'empty', symbol: '🏠', progress: 0, poles: makePolePlan(3, '24.5m', '準備中 / 空き', '', '未設定', '株間未設定', '準備中') },
+  { id: 'm6', crop: '準備中 / 空き', variety: 'M6ハウス', area: '220.5㎡', work: '24.5m × 9m / ポール1〜3', planting: '', harvest: '', status: 'empty', symbol: '🏠', progress: 0, poles: makePolePlan(3, '24.5m', '準備中 / 空き', '', '未設定', '株間未設定', '準備中') }
 ];
 defaultFields.push(...greenhouseFields);
 let fields = loadFields();
@@ -119,7 +134,7 @@ function saveFields() { localStorage.setItem('farmnote-fields-v3', JSON.stringif
 function formatDate(date) { if (!date) return '未設定'; const [y, m, d] = date.split('-'); return `${y}.${m}.${d}`; }
 function statusText(status) { return { growing: '栽培中', soon: '収穫間近', empty: '空き' }[status] || '栽培中'; }
 function normalizeFieldId(value) { return String(value || '').trim().toLowerCase().replace(/区画/g, ''); }
-function fieldDisplayName(fieldId) { const id = String(fieldId || '').trim(); const greenhouseMatch = id.match(/^([a-z])house$/i); return greenhouseMatch ? `${greenhouseMatch[1].toUpperCase()}ハウス` : id.toUpperCase(); }
+function fieldDisplayName(fieldId) { const id = String(fieldId || '').trim(); const numberedGreenhouseMatch = id.match(/^m([1-6])$/i); if (numberedGreenhouseMatch) return `M${numberedGreenhouseMatch[1]}ハウス`; const greenhouseMatch = id.match(/^([a-z])house$/i); return greenhouseMatch ? `${greenhouseMatch[1].toUpperCase()}ハウス` : id.toUpperCase(); }
 function normalizeDateValue(value) { const text = String(value || '').trim().replace(/[年月]/g, '-').replace(/日/g, '').replaceAll('/', '-'); const match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); return match ? `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}` : text; }
 function formatSpacing(value) { const text = String(value || '').trim(); return text ? (text.startsWith('株間') ? text : `株間${text}`) : ''; }
 
