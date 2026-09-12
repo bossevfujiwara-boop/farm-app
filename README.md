@@ -39,8 +39,8 @@ git init
 git add .
 git commit -m "Initial FarmNote prototype"
 git branch -M main
-git remote add origin https://github.com/<GitHubユーザー名>/farm-app.git
+git remote add origin https://github.com/bossevfujiwara-boop/farm-app.git
 git push -u origin main
 ```
 
-公開URLは通常 `https://<GitHubユーザー名>.github.io/farm-app/` です。初回デプロイ後、GitHubリポジトリの Settings > Pages で `GitHub Actions` が選択されていることを確認してください。
+公開URLは `https://bossevfujiwara-boop.github.io/farm-app/` です。初回デプロイ後、GitHubリポジトリの Settings > Pages で `GitHub Actions` が選択されていることを確認してください。

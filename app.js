@@ -119,13 +119,14 @@ function saveFields() { localStorage.setItem('farmnote-fields-v3', JSON.stringif
 function formatDate(date) { if (!date) return '未設定'; const [y, m, d] = date.split('-'); return `${y}.${m}.${d}`; }
 function statusText(status) { return { growing: '栽培中', soon: '収穫間近', empty: '空き' }[status] || '栽培中'; }
 function normalizeFieldId(value) { return String(value || '').trim().toLowerCase().replace(/区画/g, ''); }
+function fieldDisplayName(fieldId) { const id = String(fieldId || '').trim(); const greenhouseMatch = id.match(/^([a-z])house$/i); return greenhouseMatch ? `${greenhouseMatch[1].toUpperCase()}ハウス` : id.toUpperCase(); }
 function normalizeDateValue(value) { const text = String(value || '').trim().replace(/[年月]/g, '-').replace(/日/g, '').replaceAll('/', '-'); const match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); return match ? `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}` : text; }
 function formatSpacing(value) { const text = String(value || '').trim(); return text ? (text.startsWith('株間') ? text : `株間${text}`) : ''; }
 
 // 座標指定なしのFlexboxカード一覧。要素の物理的な重なりが起こらない
 function renderMap() {
   const container = document.getElementById('field-card-row');
-  container.innerHTML = fields.map(field => `<button class="field-card ${field.status} ${field.id === selectedId ? 'selected' : ''}" data-id="${field.id}"><span class="field-card-name">${field.id.toUpperCase()}区画</span><span class="field-card-crop">${field.crop || '未設定'}</span></button>`).join('');
+  container.innerHTML = fields.map(field => `<button class="field-card ${field.status} ${field.id === selectedId ? 'selected' : ''}" data-id="${field.id}"><span class="field-card-name">${fieldDisplayName(field.id)}区画</span><span class="field-card-crop">${field.crop || '未設定'}</span></button>`).join('');
   container.querySelectorAll('.field-card').forEach(button => button.addEventListener('click', () => { selectedId = button.dataset.id; renderMap(); renderDetail(); }));
   document.getElementById('active-count').textContent = fields.filter(field => field.status !== 'empty').length;
   document.getElementById('total-area').textContent = fields.reduce((total, field) => total + (Number.parseFloat(String(field.area || '').replace(',', '')) || 0), 0).toLocaleString('ja-JP');
@@ -133,7 +134,7 @@ function renderMap() {
 
 function renderDetail() {
   const field = fields.find(item => item.id === selectedId) || fields[0];
-  document.getElementById('selected-field-name').textContent = `${field.id.toUpperCase()}区画`;
+  document.getElementById('selected-field-name').textContent = `${fieldDisplayName(field.id)}区画`;
   document.getElementById('selected-status').textContent = statusText(field.status);
   document.getElementById('selected-status').className = `crop-status status-${field.status}`;
   document.getElementById('selected-symbol').textContent = field.symbol;
@@ -165,14 +166,14 @@ function renderRowPlan(field) {
   const columns = getPoleRows(field);
   document.getElementById('column-summary').textContent = `${columns.length}列`;
   const pendingMessage = '列データ未登録（今後設定予定）';
-  const missingMessage = `${field.id.toUpperCase()}区画の詳細地図データ未読込。Excelの詳細地図シートを読み込むと表示されます。`;
+  const missingMessage = `${fieldDisplayName(field.id)}区画の詳細地図データ未読込。Excelの詳細地図シートを読み込むと表示されます。`;
   document.getElementById('column-map-grid').innerHTML = columns.length ? columns.map(column => `<div class="column-map-cell"><span>${column.column}</span><strong>${column.length || '長さ未設定'}</strong><small>${column.crop || '未設定'}</small></div>`).join('') : `<div class="column-empty ${poleDataPendingIds.has(field.id) ? 'pending' : ''}">${poleDataPendingIds.has(field.id) ? pendingMessage : 'ポールデータ未読込'}<br><small>${poleDataPendingIds.has(field.id) ? 'ポール・列情報は今後設定されます。' : 'Excelの詳細地図シートを読み込むと表示されます。'}</small></div>`;
   document.getElementById('column-list').innerHTML = `<div class="column-table-wrap"><table class="column-detail-table"><thead><tr><th>ポール / 列</th><th>長さ</th><th>作物・定植日・仕様</th></tr></thead><tbody>${columns.length ? columns.map(column => `<tr><td><strong>${column.column}</strong></td><td>${column.length || '未設定'}</td><td><strong>${column.crop || '作物未設定'} ${column.variety ? `<em>${column.variety}</em>` : ''}</strong><br><span>${column.planting ? `定植 ${column.planting}` : '定植日未設定'} ・ ${column.count || '本数未設定'}${column.spacing ? ` ・ ${formatSpacing(column.spacing)}` : ''}</span><small>${column.bed || '畝未設定'} ・ ${column.mulch || 'マルチ未設定'} ・ ${column.work || '作業状態未設定'}</small></td></tr>`).join('') : `<tr><td colspan="3" class="column-table-empty ${poleDataPendingIds.has(field.id) ? 'pending' : ''}">${poleDataPendingIds.has(field.id) ? pendingMessage : missingMessage}</td></tr>`}</tbody></table></div>`;
 }
 
 function renderPolePlan(field) {
   const poles = normalizePolePlan(field.poles || []);
-  document.getElementById('layout-title').textContent = `${field.id.toUpperCase()}区画 詳細図面`;
+  document.getElementById('layout-title').textContent = `${fieldDisplayName(field.id)}区画 詳細図面`;
   document.getElementById('pole-map').innerHTML = poles.length ? poles.map(pole => `<button class="pole-map-cell" data-pole="${pole.pole}"><span>${pole.pole}</span><strong>${pole.crop || '未設定'}</strong><small>${pole.length || '長さ未設定'}</small></button>`).join('') : '<div class="column-empty">ポール別データ未登録</div>';
   document.getElementById('pole-list').innerHTML = poles.length ? poles.map(pole => `<article class="pole-row"><div class="pole-index">${pole.pole.replace('ポール↑', '')}</div><div class="pole-main"><div><strong>${pole.pole}</strong><span>${pole.length || '長さ未設定'}</span></div><b>${pole.crop || '作物未設定'}</b><p>${pole.planting ? `定植 ${pole.planting}` : '定植日未設定'} ・ ${pole.count || '本数未設定'} ・ ${formatSpacing(pole.spacing) || '株間未設定'}</p><small>${pole.bed || '畝未設定'} ・ ${pole.mulch || 'マルチ未設定'} ・ ${pole.work || '作業状態未設定'}</small></div></article>`).join('') : '<div class="column-empty">詳細図面データがありません。列・ポール情報付きCSVを読み込んでください。</div>';
 }
@@ -187,12 +188,12 @@ function renderCalendar() {
   const year = 2027; const daysInMonth = new Date(year, currentMonth + 1, 0).getDate();
   document.getElementById('calendar-month').textContent = `${year}年 ${currentMonth + 1}月`;
   document.getElementById('gantt-days').innerHTML = Array.from({ length: daysInMonth }, (_, index) => { const date = new Date(year, currentMonth, index + 1); const weekend = date.getDay() === 0 || date.getDay() === 6; return `<div class="day-cell ${weekend ? 'weekend' : ''} ${index + 1 === 12 && currentMonth === 3 ? 'today' : ''}"><span>${index + 1}</span><small>${['日','月','火','水','木','金','土'][date.getDay()]}</small></div>`; }).join('');
-  document.getElementById('gantt-rows').innerHTML = fields.map(field => { const start = field.planting ? new Date(`${field.planting}T00:00:00`) : null; const end = field.harvest ? new Date(`${field.harvest}T00:00:00`) : null; const monthStart = new Date(year, currentMonth, 1); const startOffset = start ? Math.max(0, Math.min(daysInMonth, Math.round((start - monthStart) / 86400000))) : 0; const endOffset = end ? Math.max(1, Math.min(daysInMonth, Math.round((end - monthStart) / 86400000))) : 0; const width = field.status === 'empty' ? 10 : Math.max(7, endOffset - startOffset); const bar = field.status === 'empty' ? '<div class="gantt-bar empty" style="left:2%;width:10%">休耕</div>' : `<div class="gantt-bar ${field.status}" data-id="${field.id}" style="left:${startOffset / daysInMonth * 100}%;width:${width / daysInMonth * 100}%">${field.crop} / ${field.work || '作業未設定'}</div><i class="gantt-harvest" style="left:${endOffset / daysInMonth * 100}%"></i>`; return `<div class="gantt-row"><div class="gantt-field"><b>${field.id.toUpperCase()}区画</b><span>${field.crop} / ${field.variety || '品種未設定'}</span></div><div class="gantt-track">${bar}</div></div>`; }).join('');
+  document.getElementById('gantt-rows').innerHTML = fields.map(field => { const start = field.planting ? new Date(`${field.planting}T00:00:00`) : null; const end = field.harvest ? new Date(`${field.harvest}T00:00:00`) : null; const monthStart = new Date(year, currentMonth, 1); const startOffset = start ? Math.max(0, Math.min(daysInMonth, Math.round((start - monthStart) / 86400000))) : 0; const endOffset = end ? Math.max(1, Math.min(daysInMonth, Math.round((end - monthStart) / 86400000))) : 0; const width = field.status === 'empty' ? 10 : Math.max(7, endOffset - startOffset); const bar = field.status === 'empty' ? '<div class="gantt-bar empty" style="left:2%;width:10%">休耕</div>' : `<div class="gantt-bar ${field.status}" data-id="${field.id}" style="left:${startOffset / daysInMonth * 100}%;width:${width / daysInMonth * 100}%">${field.crop} / ${field.work || '作業未設定'}</div><i class="gantt-harvest" style="left:${endOffset / daysInMonth * 100}%"></i>`; return `<div class="gantt-row"><div class="gantt-field"><b>${fieldDisplayName(field.id)}区画</b><span>${field.crop} / ${field.variety || '品種未設定'}</span></div><div class="gantt-track">${bar}</div></div>`; }).join('');
   document.querySelectorAll('.gantt-bar[data-id]').forEach(bar => bar.addEventListener('click', () => { selectedId = bar.dataset.id; showView('map-view'); renderMap(); renderDetail(); }));
   document.getElementById('calendar-total').textContent = fields.filter(field => field.status !== 'empty').length; document.getElementById('calendar-harvests').textContent = fields.filter(field => field.harvest && new Date(field.harvest).getMonth() === currentMonth).length;
 }
 
-function openEditor() { const field = fields.find(item => item.id === selectedId); const form = document.getElementById('field-form'); form.elements.crop.value = field.crop; form.elements.variety.value = field.variety; form.elements.area.value = field.area || ''; form.elements.work.value = field.work || ''; form.elements.planting.value = field.planting; form.elements.harvest.value = field.harvest; form.elements.status.value = field.status; document.getElementById('modal-title').textContent = `${field.id.toUpperCase()}区画の情報`; document.getElementById('edit-modal').classList.remove('hidden'); }
+function openEditor() { const field = fields.find(item => item.id === selectedId); const form = document.getElementById('field-form'); form.elements.crop.value = field.crop; form.elements.variety.value = field.variety; form.elements.area.value = field.area || ''; form.elements.work.value = field.work || ''; form.elements.planting.value = field.planting; form.elements.harvest.value = field.harvest; form.elements.status.value = field.status; document.getElementById('modal-title').textContent = `${fieldDisplayName(field.id)}区画の情報`; document.getElementById('edit-modal').classList.remove('hidden'); }
 function closeEditor() { document.getElementById('edit-modal').classList.add('hidden'); }
 function showToast(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2200); }
 
@@ -248,7 +249,7 @@ function extractKnownCropNames(text) { const source = toHiragana(text); return g
 function getMarketInfo(cropName) { const source = liveMarketData || marketFallbackData; const key = extractKnownCropNames(cropName)[0]; return key ? source[key] : { trend: '情報なし', trendClass: 'flat', price: null, unit: '', yoy: null, avgRatio: null, advice: 'この作物の相場データは準備中です。' }; }
 // ポール列ごとの作物を集計し、最も列数が多い主要作物と対象ポール範囲を特定
 function getDominantCrop(field) {
-  const label = `${field.id.toUpperCase()}区画`;
+  const label = `${fieldDisplayName(field.id)}区画`;
   const poles = Array.isArray(field.poles) ? field.poles.filter(pole => pole && pole.crop) : [];
   if (!poles.length) { const names = extractKnownCropNames(field.crop); return { crop: names[0] || field.crop || '', range: label }; }
   const counts = new Map();
