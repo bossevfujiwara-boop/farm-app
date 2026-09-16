@@ -135,8 +135,8 @@ let currentMonth = planningSeason.startMonth;
 
 function normalizePolePlan(poles) { let previous = {}; return (poles || []).map(pole => { const normalized = { ...previous, ...pole }; for (const key of ['crop', 'planting', 'count', 'spacing', 'bed', 'mulch', 'work']) if (normalized[key] === '〃') normalized[key] = previous[key] || ''; previous = normalized; return normalized; }); }
 function applyLatestOverrides(records) { return records.filter(field => !removedFieldIds.has(field.id)).map(field => ({ ...field, ...(latestOverrides[field.id] || {}), poles: normalizePolePlan(field.poles || detailedPolePlans[field.id] || []), workProcess: field.workProcess || workProcessSeeds[field.id] || null })); }
-function loadFields() { try { const stored = JSON.parse(localStorage.getItem('farmnote-fields-v5-2026-27')); return applyLatestOverrides(stored && stored.length >= defaultFields.length ? stored.map(field => ({ ...field, id: normalizeFieldId(field.id) })) : structuredClone(defaultFields)); } catch { return applyLatestOverrides(structuredClone(defaultFields)); } }
-function saveFields() { localStorage.setItem('farmnote-fields-v5-2026-27', JSON.stringify(fields)); document.getElementById('last-updated').textContent = '今 保存済み'; }
+function loadFields() { try { const stored = JSON.parse(localStorage.getItem('farmnote-fields-v6-2026-27')); return applyLatestOverrides(stored && stored.length >= defaultFields.length ? stored.map(field => ({ ...field, id: normalizeFieldId(field.id) })) : structuredClone(defaultFields)); } catch { return applyLatestOverrides(structuredClone(defaultFields)); } }
+function saveFields() { localStorage.setItem('farmnote-fields-v6-2026-27', JSON.stringify(fields)); document.getElementById('last-updated').textContent = '今 保存済み'; }
 function formatDate(date) { if (!date) return '未設定'; const [y, m, d] = date.split('-'); return `${y}.${m}.${d}`; }
 function statusText(status) { return { growing: '栽培中', soon: '収穫間近', preparing: '準備中', empty: '空き' }[status] || '栽培中'; }
 function normalizeFieldId(value) { return String(value || '').trim().toLowerCase().replace(/区画/g, ''); }
