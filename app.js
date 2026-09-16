@@ -1,5 +1,5 @@
 const defaultFields = [
-  { id: 'a', crop: 'にら', variety: 'グリーンベルト', area: '80㎡', work: '追肥・除草', planting: '2026-03-12', harvest: '2026-05-20', status: 'growing', symbol: '🌿', progress: 42 },
+  { id: 'a', crop: '白菜', variety: '', area: '80㎡', work: 'ポール2〜10 作付', planting: '', harvest: '', status: 'growing', symbol: '🥬', progress: 0 },
   { id: 'b', crop: '白菜', variety: '', area: '120㎡', work: 'ポール3〜6 作付', planting: '', harvest: '', status: 'growing', symbol: '🥬', progress: 0 },
   { id: 'c', crop: 'スイカ', variety: '祭ばやし', area: '150㎡', work: 'つる整理', planting: '2026-04-15', harvest: '2026-07-25', status: 'growing', symbol: '🍉', progress: 18 },
   { id: 'd', crop: 'ミニトマト', variety: 'CF千果', area: '90㎡', work: '誘引・わき芽かき', planting: '2026-03-25', harvest: '2026-06-30', status: 'growing', symbol: '🍅', progress: 28 },
@@ -79,26 +79,11 @@ const cropTemperatureTargets = {
 };
 let currentAverageTemp = null;
 const poleDataPendingIds = new Set(['m']);
-const detailedPolePlans = { l1: Array.from({ length: 26 }, (_, index) => { const pole = index + 1; const lengths = ['95.7m', '88.6m', '91.2m', '86.4m', '82.1m', '79.8m']; const contents = [
-  ['きゅうり(自根)', '4/29', '380本', '株間40cm'], ['〃', '〃', '380本', '株間40cm'], ['きゅうり(接木)', '5/6', '760本', '株間40cm'], ['〃', '〃', '760本', '株間40cm'],
-  ['きゅうり(自根)', '08/15', '380本', '株間40cm'], ['〃', '〃', '380本', '株間40cm']
-]; const [crop, planting, count, spacing] = contents[index % contents.length]; return { pole: `ポール↑${pole}`, length: lengths[index % lengths.length], crop, planting, count, spacing, bed: `畝${pole}`, mulch: pole % 3 === 0 ? '白黒マルチ' : '黒マルチ', work: pole % 4 === 0 ? '誘引・整枝' : '定植済み' }; }) };
+const detailedPolePlans = {
+  a: Array.from({ length: 9 }, (_, index) => { const pole = index + 2; return { pole: `ポール↑${pole}`, length: '', crop: '白菜', planting: '', count: '仕様参照', spacing: '株間指定', bed: `畝${pole}`, mulch: '', work: '定植済み' }; }),
+  b: [3, 4, 5, 6].map(pole => ({ pole: `ポール↑${pole}`, length: '28.9m', crop: '白菜', planting: '', count: '仕様参照', spacing: '株間指定', bed: `畝${pole}`, mulch: '黒マルチ', work: '定植済み' }))
+};
 function makePolePlan(count, lengths, crop, planting, countText, spacing = '株間40cm', work = '定植済み') { return Array.from({ length: count }, (_, index) => ({ pole: `ポール↑${index + 1}`, length: typeof lengths === 'function' ? lengths(index + 1) : lengths[index] || lengths[lengths.length - 1], crop, planting, count: countText, spacing, bed: `畝${index + 1}`, mulch: '黒マルチ', work })); }
-Object.assign(detailedPolePlans, {
-  a: makePolePlan(10, pole => ({ 1: '92.7m', 2: '92.7m', 3: '89.8m', 4: '87.8m', 5: '77m', 6: '66.4m', 7: '66.4m', 8: '47.3m', 9: '36.6m', 10: '28.9m' }[pole]), 'ジャガイモ', '2026/10/20', '株数指定・各2列', '株間30cm'),
-  b: [3, 4, 5, 6].map(pole => ({ pole: `ポール↑${pole}`, length: '28.9m', crop: '白菜', planting: '', count: '仕様参照', spacing: '株間指定', bed: `畝${pole}`, mulch: '黒マルチ', work: '定植済み' })),
-  d: makePolePlan(17, pole => pole <= 14 ? '85m' : pole <= 16 ? '82.3m' : '71.7m', 'ミニトマト', '5/4、5/13、7/4、7/7、7/9、7/11', '株数・列数指定', '株間指定'),
-  e1: makePolePlan(18, pole => pole <= 7 ? '31.4m' : pole <= 15 ? '33.1m' : pole <= 17 ? '21.6m' : '16.5m', 'トマト', '07/17', '700本', '株間指定'),
-  e2: makePolePlan(5, '44.1m', 'アスパラ', '定植日指定', '列ごと本数指定', '株間指定'),
-  f: makePolePlan(23, pole => pole === 1 ? '17.9m' : pole <= 11 ? '50m' : pole <= 16 ? '69.7m' : '15.5m', '人参 / ピーマン / しし唐', '5/25、5/28、6/5', '本数・列数指定', '株間指定'),
-  h: makePolePlan(23, '24.0m', 'メロン / スイカ / しし唐 / トウモロコシ / インゲン豆', '5/2、5/10、5/15、5/28、6/6', '列ごと本数指定', '株間指定'),
-  i: makePolePlan(18, '171.6m', 'トマト / スイートバジル / ホーリーバジル / 白菜 / サツマイモ / 里芋', '4/25、6/10、6/18、6/25', '本数・列数指定', '株間指定'),
-  j: makePolePlan(18, '171.6m', 'トマト / スイートバジル / ホーリーバジル / 白菜 / サツマイモ / 里芋', '4/25、6/10、6/18、6/25', '本数・列数指定', '株間指定'),
-  k: makePolePlan(12, pole => pole <= 1 ? '26.6m' : pole <= 9 ? '100m' : '168m', 'モロヘイヤ / サツマイモ / しし唐 / オクラ', '4/25、6/10、6/13、6/25', '本数・列数指定', '株間指定'),
-  l2: makePolePlan(19, pole => pole <= 2 ? '5.5m' : '37.5m', 'しし唐 / かぼちゃ', '5/2、6/6', 'かぼちゃ200本・列ごと指定', '株間指定'),
-  n: makePolePlan(30, '29.0m', 'サツマイモ', '4/25、6/10、7/1、7/2', '各3列', '株間指定'),
-  o: makePolePlan(1, '123.0m', '準備中 / 人参 / 白菜 / キャベツ', '作付計画参照', '人参10200本 / 白菜1200本 / キャベツ900本', '株間指定')
-});
 const greenhouseFields = [
   { id: 'bhouse', crop: 'スイカ', variety: 'Bハウス', area: '188.55㎡', work: '定植済み', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '41.9m', 'スイカ', '', '28本', '株間80cm') },
   { id: 'chouse', crop: 'ハウス作付', variety: 'Cハウス', area: '237.64㎡', work: '5.2m幅', planting: '', harvest: '', status: 'growing', symbol: '🏠', progress: 0, poles: makePolePlan(1, '45.7m', 'Cハウス作付', '', '仕様参照', '幅5.2m') },
@@ -135,8 +120,8 @@ let currentMonth = planningSeason.startMonth;
 
 function normalizePolePlan(poles) { let previous = {}; return (poles || []).map(pole => { const normalized = { ...previous, ...pole }; for (const key of ['crop', 'planting', 'count', 'spacing', 'bed', 'mulch', 'work']) if (normalized[key] === '〃') normalized[key] = previous[key] || ''; previous = normalized; return normalized; }); }
 function applyLatestOverrides(records) { return records.filter(field => !removedFieldIds.has(field.id)).map(field => ({ ...field, ...(latestOverrides[field.id] || {}), poles: normalizePolePlan(field.poles || detailedPolePlans[field.id] || []), workProcess: field.workProcess || workProcessSeeds[field.id] || null })); }
-function loadFields() { try { const stored = JSON.parse(localStorage.getItem('farmnote-fields-v6-2026-27')); return applyLatestOverrides(stored && stored.length >= defaultFields.length ? stored.map(field => ({ ...field, id: normalizeFieldId(field.id) })) : structuredClone(defaultFields)); } catch { return applyLatestOverrides(structuredClone(defaultFields)); } }
-function saveFields() { localStorage.setItem('farmnote-fields-v6-2026-27', JSON.stringify(fields)); document.getElementById('last-updated').textContent = '今 保存済み'; }
+function loadFields() { try { const stored = JSON.parse(localStorage.getItem('farmnote-fields-v7-2026-27')); return applyLatestOverrides(stored && stored.length >= defaultFields.length ? stored.map(field => ({ ...field, id: normalizeFieldId(field.id) })) : structuredClone(defaultFields)); } catch { return applyLatestOverrides(structuredClone(defaultFields)); } }
+function saveFields() { localStorage.setItem('farmnote-fields-v7-2026-27', JSON.stringify(fields)); document.getElementById('last-updated').textContent = '今 保存済み'; }
 function formatDate(date) { if (!date) return '未設定'; const [y, m, d] = date.split('-'); return `${y}.${m}.${d}`; }
 function statusText(status) { return { growing: '栽培中', soon: '収穫間近', preparing: '準備中', empty: '空き' }[status] || '栽培中'; }
 function normalizeFieldId(value) { return String(value || '').trim().toLowerCase().replace(/区画/g, ''); }
