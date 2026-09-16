@@ -1,18 +1,18 @@
 const defaultFields = [
-  { id: 'a', crop: 'にら', variety: 'グリーンベルト', area: '80㎡', work: '追肥・除草', planting: '2027-03-12', harvest: '2027-05-20', status: 'growing', symbol: '🌿', progress: 42 },
-  { id: 'b', crop: 'じゃがいも', variety: 'キタアカリ', area: '120㎡', work: '芽かき・土寄せ', planting: '2027-03-01', harvest: '2027-06-10', status: 'growing', symbol: '🥔', progress: 35 },
-  { id: 'c', crop: 'スイカ', variety: '祭ばやし', area: '150㎡', work: 'つる整理', planting: '2027-04-15', harvest: '2027-07-25', status: 'growing', symbol: '🍉', progress: 18 },
-  { id: 'd', crop: 'ミニトマト', variety: 'CF千果', area: '90㎡', work: '誘引・わき芽かき', planting: '2027-03-25', harvest: '2027-06-30', status: 'growing', symbol: '🍅', progress: 28 },
+  { id: 'a', crop: 'にら', variety: 'グリーンベルト', area: '80㎡', work: '追肥・除草', planting: '2026-03-12', harvest: '2026-05-20', status: 'growing', symbol: '🌿', progress: 42 },
+  { id: 'b', crop: 'じゃがいも', variety: 'キタアカリ', area: '120㎡', work: '芽かき・土寄せ', planting: '2026-03-01', harvest: '2026-06-10', status: 'growing', symbol: '🥔', progress: 35 },
+  { id: 'c', crop: 'スイカ', variety: '祭ばやし', area: '150㎡', work: 'つる整理', planting: '2026-04-15', harvest: '2026-07-25', status: 'growing', symbol: '🍉', progress: 18 },
+  { id: 'd', crop: 'ミニトマト', variety: 'CF千果', area: '90㎡', work: '誘引・わき芽かき', planting: '2026-03-25', harvest: '2026-06-30', status: 'growing', symbol: '🍅', progress: 28 },
   { id: 'e1', crop: '休耕', variety: '土づくり中', area: '60㎡', work: '堆肥散布', planting: '', harvest: '', status: 'empty', symbol: '—', progress: 0 },
-  { id: 'e2', crop: '枝豆', variety: '湯あがり娘', area: '70㎡', work: '播種準備', planting: '2027-04-05', harvest: '2027-06-20', status: 'growing', symbol: '🌱', progress: 20 },
-  { id: 'f', crop: 'にら', variety: 'ワンダーグリーン', area: '75㎡', work: '収穫・追肥', planting: '2027-02-20', harvest: '2027-04-25', status: 'soon', symbol: '🌿', progress: 88 },
-  { id: 'h', crop: 'スイカ', variety: '黒皮大玉', area: '180㎡', work: 'マルチ張り', planting: '2027-04-18', harvest: '2027-08-01', status: 'growing', symbol: '🍉', progress: 12 },
-  { id: 'i', crop: 'ミニトマト', variety: 'アイコ', area: '95㎡', work: '支柱立て', planting: '2027-03-28', harvest: '2027-07-05', status: 'growing', symbol: '🍅', progress: 25 },
-  { id: 'j', crop: 'きゅうり', variety: '夏すずみ', area: '85㎡', work: 'ネット設置', planting: '2027-04-10', harvest: '2027-06-28', status: 'growing', symbol: '🥒', progress: 17 },
+  { id: 'e2', crop: '枝豆', variety: '湯あがり娘', area: '70㎡', work: '播種準備', planting: '2026-04-05', harvest: '2026-06-20', status: 'growing', symbol: '🌱', progress: 20 },
+  { id: 'f', crop: 'にら', variety: 'ワンダーグリーン', area: '75㎡', work: '収穫・追肥', planting: '2026-02-20', harvest: '2026-04-25', status: 'soon', symbol: '🌿', progress: 88 },
+  { id: 'h', crop: 'スイカ', variety: '黒皮大玉', area: '180㎡', work: 'マルチ張り', planting: '2026-04-18', harvest: '2026-08-01', status: 'growing', symbol: '🍉', progress: 12 },
+  { id: 'i', crop: 'ミニトマト', variety: 'アイコ', area: '95㎡', work: '支柱立て', planting: '2026-03-28', harvest: '2026-07-05', status: 'growing', symbol: '🍅', progress: 25 },
+  { id: 'j', crop: 'きゅうり', variety: '夏すずみ', area: '85㎡', work: 'ネット設置', planting: '2026-04-10', harvest: '2026-06-28', status: 'growing', symbol: '🥒', progress: 17 },
   { id: 'k', crop: '休耕', variety: '次作準備', area: '55㎡', work: '耕うん', planting: '', harvest: '', status: 'empty', symbol: '—', progress: 0 },
-  { id: 'l1', crop: 'にら', variety: 'グリーンベルト', area: '65㎡', work: '除草', planting: '2027-03-10', harvest: '2027-05-15', status: 'growing', symbol: '🌿', progress: 45 },
-  { id: 'l2', crop: 'じゃがいも', variety: 'メークイン', area: '100㎡', work: '芽かき', planting: '2027-03-04', harvest: '2027-06-12', status: 'growing', symbol: '🥔', progress: 32 },
-  { id: 'm', crop: 'スイカ', variety: '小玉ひとりじめ', area: '140㎡', work: '人工授粉', planting: '2027-04-20', harvest: '2027-07-30', status: 'growing', symbol: '🍉', progress: 8 },
+  { id: 'l1', crop: 'にら', variety: 'グリーンベルト', area: '65㎡', work: '除草', planting: '2026-03-10', harvest: '2026-05-15', status: 'growing', symbol: '🌿', progress: 45 },
+  { id: 'l2', crop: 'じゃがいも', variety: 'メークイン', area: '100㎡', work: '芽かき', planting: '2026-03-04', harvest: '2026-06-12', status: 'growing', symbol: '🥔', progress: 32 },
+  { id: 'm', crop: 'スイカ', variety: '小玉ひとりじめ', area: '140㎡', work: '人工授粉', planting: '2026-04-20', harvest: '2026-07-30', status: 'growing', symbol: '🍉', progress: 8 },
   { id: 'n', crop: 'サツマイモ', variety: '紅はるか、安納芋', area: '', work: '栽培中', planting: '', harvest: '', status: 'growing', symbol: '🍠', progress: 50, nextCrop: 'ニンニク(新植)', nextVariety: '蒼山種', nextPlanting: '9月-11月', nextHarvest: '種まき後35-50日（翌年5月-6月）' },
   { id: 'o', crop: '休耕', variety: '輪作予定', area: '50㎡', work: '緑肥すき込み', planting: '', harvest: '', status: 'empty', symbol: '—', progress: 0 }
 ];
@@ -135,8 +135,8 @@ let currentMonth = planningSeason.startMonth;
 
 function normalizePolePlan(poles) { let previous = {}; return (poles || []).map(pole => { const normalized = { ...previous, ...pole }; for (const key of ['crop', 'planting', 'count', 'spacing', 'bed', 'mulch', 'work']) if (normalized[key] === '〃') normalized[key] = previous[key] || ''; previous = normalized; return normalized; }); }
 function applyLatestOverrides(records) { return records.filter(field => !removedFieldIds.has(field.id)).map(field => ({ ...field, ...(latestOverrides[field.id] || {}), poles: normalizePolePlan(field.poles || detailedPolePlans[field.id] || []), workProcess: field.workProcess || workProcessSeeds[field.id] || null })); }
-function loadFields() { try { const stored = JSON.parse(localStorage.getItem('farmnote-fields-v4-2026-27')); return applyLatestOverrides(stored && stored.length >= defaultFields.length ? stored.map(field => ({ ...field, id: normalizeFieldId(field.id) })) : structuredClone(defaultFields)); } catch { return applyLatestOverrides(structuredClone(defaultFields)); } }
-function saveFields() { localStorage.setItem('farmnote-fields-v4-2026-27', JSON.stringify(fields)); document.getElementById('last-updated').textContent = '今 保存済み'; }
+function loadFields() { try { const stored = JSON.parse(localStorage.getItem('farmnote-fields-v5-2026-27')); return applyLatestOverrides(stored && stored.length >= defaultFields.length ? stored.map(field => ({ ...field, id: normalizeFieldId(field.id) })) : structuredClone(defaultFields)); } catch { return applyLatestOverrides(structuredClone(defaultFields)); } }
+function saveFields() { localStorage.setItem('farmnote-fields-v5-2026-27', JSON.stringify(fields)); document.getElementById('last-updated').textContent = '今 保存済み'; }
 function formatDate(date) { if (!date) return '未設定'; const [y, m, d] = date.split('-'); return `${y}.${m}.${d}`; }
 function statusText(status) { return { growing: '栽培中', soon: '収穫間近', preparing: '準備中', empty: '空き' }[status] || '栽培中'; }
 function normalizeFieldId(value) { return String(value || '').trim().toLowerCase().replace(/区画/g, ''); }
